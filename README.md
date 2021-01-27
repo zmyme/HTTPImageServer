@@ -45,13 +45,13 @@ return:
 ```
 params: 
 
-    path: the image that you want to access.
+ - path: the image that you want to access.
 
-    height: image max height.
+ - height: image max height.
 
-    width: image max width.
+ - width: image max width.
 
-    > Note: if no height and width are provided, the original image will be returned.
+> Note: if no height and width are provided, the original image will be returned.
 
 return:
 
