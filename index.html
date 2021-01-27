@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<style>
+    body {
+        margin: 0;
+        background-color: #e2e2e2;
+    }
+    .subfolders {
+        display: flex;
+        background-color: #e2e2e2;
+        padding: 1.0rem;
+        justify-content: center;
+        flex-wrap: wrap;
+        border-bottom: solid;
+        border-bottom-width: 2.0px;
+        border-bottom-color: #c0c0c0;
+    }
+    .subfolders > a {
+        margin: 0.5rem;
+        padding: 0.5rem;
+        text-decoration: none;
+        color: #2e2e22;
+        font-size: large;
+        background-color: #ffffff;
+        outline-color: #202020;
+        border-radius: 0.3rem;
+        padding: 1.0rem;
+        box-shadow: 0 0 0.5rem 0.5rem #e1e1e1;
+    }
+    .subfolders > a:hover {
+        background-color: #2e2e22;
+        color: #e2e2e2;
+    }
+    .images {
+        display: flex;
+        margin-top: 1.0rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    .imgcontainer {
+        display: flex;
+        flex-direction: column;
+        margin: 0.3rem;
+        padding: 0.3rem;
+        background-color: #ffffff;
+        border-radius: 0.3rem;
+        justify-content: center;
+    }
+    .imgcontainer > a {
+        display: flex;
+        justify-content: center;
+    }
+    .imgcontainer > p {
+        text-align: center;
+        margin: 0.2rem;
+    }
+    .more {
+        display: flex;
+        justify-content: center;
+        background-color: #2e2e2e;
+        color: #e2e2e2;
+        font-size: x-large;
+        padding: 1.0rem;
+        cursor: pointer;
+    }
+</style>
+<html lang="zh-CN">
+    <head>
+        <meta charset="utf-8">
+        <title>ImageServer</title>
+    </head>
+    <body>
+        <div class="subfolders" id="subfolders">
+            <!-- <a href="test">..[Parent Dir]</a> -->
+        </div>
+        <div class="images" id="images">
+            <!-- <div class="imgcontainer"><img src="torch_tf.png" height="400px"><p>test1.png</p></div> -->
+        </div>
+        <div class="more" onclick="show_more_image()">
+            加载更多
+        </div>
+    </body>
+</html>
+
+<script>
+    function parse_url(url) {
+        if (url == '') {
+            return {}
+        }
+        urls = url.substr(1).split('&')
+        params = {}
+        for (var item of urls) {
+            delemeter_pos = item.indexOf('=')
+            key = null, value = null
+            if (delemeter_pos == -1) {
+                key = item
+            } else {
+                key = item.substr(0, delemeter_pos)
+                value = item.substr(delemeter_pos + 1)
+            }
+            params[key] = value
+        }
+        return params
+    }
+    function encode_url(params) {
+        url = []
+        for (var key in params) {
+        　　url.push(key + '=' + params[key])
+        }
+        return url.join('&')
+    }
+
+    function show_directory(dirs, folder_node) {
+        folder_node.innerHTML = ''
+        image_node.innerHTML = ''
+        path = params['path']
+        path = path.split('/')
+        path = path.slice(0, path.length - 1).join('/')
+        this_params = JSON.parse(JSON.stringify(params))
+        this_params['path'] = path
+        this_node = document.createElement('a')
+        this_node.href = host + "/?" + encode_url(this_params)
+        this_node.innerHTML = '..[ParentDir]'
+        folder_node.appendChild(this_node)
+        dirs.forEach(element => {
+            this_node = document.createElement('a')
+            elem_split = element.split('/')
+            this_params = JSON.parse(JSON.stringify(params))
+            this_params['path'] = element
+            this_node.href = host + "/?" + encode_url(this_params)
+            this_node.innerHTML = elem_split[elem_split.length-1]
+            folder_node.appendChild(this_node)
+        });
+    }
+    function show_image(imgs, image_node, start, max) {
+        this_imgs = imgs.slice(start, start + max)
+        this_imgs.forEach(element => {
+            elem_split = element.split('/')
+            elem_name = elem_split[elem_split.length-1]
+            this_node = document.createElement('div')
+            this_node.className = 'imgcontainer'
+            img_url = host + `/img?path=${element}`
+            rawurl = img_url
+            size_attr = ''
+            if (params.hasOwnProperty('width')) {
+                width = params['width']
+                img_url += `&width=${width}`
+                size_attr += 'width=${width}px'
+            }
+            if (params.hasOwnProperty('height')) {
+                height = params['height']
+                img_url += `&height=${height}`
+                size_attr += `height=${height}px`
+            }
+            
+            this_node.innerHTML = `<a href="${rawurl}" target="_blank"><img src="${img_url}" ${size_attr}"></a><p>${elem_name}</p>`
+            image_node.appendChild(this_node)
+        });
+    }
+    function show_more_image() {
+        start = parseInt(params['start'])
+        max = parseInt(params['max'])
+        params['start'] = (start + max).toString()
+        show_image(imgs, image_node, start, max)
+    }
+
+    folder_node = document.getElementById('subfolders')
+    image_node = document.getElementById('images')
+    var search = window.location.search
+    var host = window.location.protocol + '//' + window.location.host
+    params = parse_url(search)
+    var start = '0'
+    var max = '50'
+    if (!params.hasOwnProperty('start')){
+        params['start'] = start
+    }
+    if (!params.hasOwnProperty('max')) {
+        params['max'] = max
+    }
+    if (!params.hasOwnProperty('path')) {
+        if (!(params.hasOwnProperty('width') | params.hasOwnProperty())) {
+            params['height'] = '256'
+        }
+        params['path'] = '/'
+        encoded = encode_url(params)
+        window.location.search = encoded
+    }
+    document.title = 'IM: ' + params['path']
+
+    var http = new XMLHttpRequest()
+    http.open("GET", host + '/directory?path=' + params['path'])
+    http.send()
+    http.onloadend = (e) => {
+        response = JSON.parse(http.responseText)
+        dirs = response['dirs']
+        imgs = response['imgs']
+        show_directory(dirs, folder_node)
+        var start = parseInt(params['start'])
+        var max = parseInt(params['max'])
+        show_image(imgs, image_node, start, max)
+    }
+</script>
