@@ -13,7 +13,7 @@ python server.py <port> <webroot>
 ```
 where ```port``` is a int number of which port to use (default: 80), and ```webroot``` is the directory that containing the images(default: current directory).
 
-## 3. Mostly asked problem
+## 3. Mostly asked questions
 
 Q1. ```KeyError: webp```
 
