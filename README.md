@@ -23,7 +23,7 @@ Ans. We use webp format to encode the image and your system have no libwebp inst
 
 2. you can install ```libwebp-dev``` and reinstall pillow package for webp support.
 
-## 3. Structure.
+## 4. Structure.
 The server.py mainly provides two api.
 1. To access filelist under the given directory, please access:
 ```
@@ -44,16 +44,23 @@ return:
 /img?path=relative/path/to/file&height=100&width=200
 ```
 params: 
+
     path: the image that you want to access.
+
     height: image max height.
+
     width: image max width.
+
     > Note: if no height and width are provided, the original image will be returned.
+
 return:
+
     the image stream.
 
 For more details about the structure, please see the network.py.
 
-## 4. Ps
+## 5. Ps
 
 1. The http server are written starting from socket, i do not use the http.server module in python. Therefore, there might be some bugs and may cause some problems, be sure not to use in production enviroment.
+
 2. The index.html is gabbage, i have never write javascript before. You can try to re-write it if you are disgusting with that.
