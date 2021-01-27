@@ -16,8 +16,11 @@ where ```port``` is a int number of which port to use (default: 80), and ```webr
 ## 3. Mostly asked problem
 
 Q1. ```KeyError: webp```
+
 Ans. We use webp format to encode the image and your system have no libwebp installed. 
+
     1. you can change the format to others by modifying the code ```img = img.save(img_stream, format='webp')``` in server.py/HTTPImageServer.handle_image(line 165)
+
     2. you can install ```libwebp-dev``` and reinstall pillow package for webp support.
 
 ## 3. Structure.
