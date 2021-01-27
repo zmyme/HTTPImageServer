@@ -160,7 +160,7 @@
         start = parseInt(params['start'])
         max = parseInt(params['max'])
         params['start'] = (start + max).toString()
-        show_image(imgs, image_node, start, max)
+        show_image(imgs, image_node, start + max, max)
     }
 
     folder_node = document.getElementById('subfolders')
