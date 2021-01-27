@@ -30,14 +30,15 @@ The server.py mainly provides two api.
 /directory?path=relative/path/to/file
 ```
 params: 
-    path: the directory that you want to list.
+- path: the directory that you want to list.
 return:
-    ```json
-    {
-        "dirs": [list, of, subdirs],
-        "imgs": [image, file, under, the, directory],
-    }
-    ```
+
+```json
+{
+    "dirs": [list, of, subdirs],
+    "imgs": [image, file, under, the, directory],
+}
+```
 
 2. to access the image:
 ```
@@ -45,17 +46,17 @@ return:
 ```
 params: 
 
- - path: the image that you want to access.
+- path: the image that you want to access.
 
- - height: image max height.
+- height: image max height.
 
- - width: image max width.
+- width: image max width.
 
 > Note: if no height and width are provided, the original image will be returned.
 
 return:
 
-the image stream.
+- the image stream.
 
 For more details about the structure, please see the network.py.
 
