@@ -55,7 +55,7 @@ params:
 
 return:
 
-    the image stream.
+the image stream.
 
 For more details about the structure, please see the network.py.
 
