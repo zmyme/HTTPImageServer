@@ -35,8 +35,8 @@ return:
 
 ```json
 {
-    "dirs": [list, of, subdirs],
-    "imgs": [image, file, under, the, directory],
+    "dirs": ["list", "of", "subdirs"],
+    "imgs": ["image", "file", "under", "the", "directory"],
 }
 ```
 
