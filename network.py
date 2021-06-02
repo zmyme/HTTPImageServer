@@ -53,7 +53,7 @@ class BasicTCPServer():
             pass
         except (Exception, KeyboardInterrupt):
             self.socket.close()
-            print('Bye~')
+            print('ヾ(•ω•`)o')
 
     def start(self, back=True):
         if back:

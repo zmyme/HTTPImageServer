@@ -19,12 +19,15 @@ def loadfile(path):
         return f.read()
 
 class HTTPImageServer():
-    def __init__(self, bind_addr, imgroot='.'):
+    def __init__(self, bind_addr, imgroot='.', thumbnail='webp', allowcros=True, loglevel=2):
         self.server = HTTPBaseServer(request_handler=self.handle, bind_addr=bind_addr)
         self.imgroot = imgroot
         self.img_extension = ['png', 'jpg', 'jpeg', 'tiff', 'webp', 'bmp']
         self.print_lock = threading.Lock()
         self.logqueue = queue.Queue()
+        self.thumbnail = thumbnail
+        self.allowcros = allowcros
+        self.loglevel = loglevel # 0: all information 1: only for response. 2: do not log image file. 3: no log.
     def start(self, back=True):
         t = threading.Thread(target=self.logger, name='Logger thread', daemon=True)
         t.start()
@@ -61,16 +64,19 @@ class HTTPImageServer():
     def log(self, msg):
         self.logqueue.put(msg)
     
-    def response(self, connection, header, content):
-        msg = '[{time}] {method}: {url} - {stat}'.format(
-            time = time.strftime("%H:%M:%S", time.localtime()),
-            method = connection.header.method,
-            url = connection.header.url,
-            stat = '{0}({1})'.format(header.code, HTTPStatus(header.code).phrase)
-        )
-        self.log(msg)
+    def response(self, connection, header, content, loglevel=1):
+        if loglevel >= self.loglevel:
+            msg = '[{time}] {method}: {url} - {stat}'.format(
+                time = time.strftime("%H:%M:%S", time.localtime()),
+                method = connection.header.method,
+                url = connection.header.url,
+                stat = '{0}({1})'.format(header.code, HTTPStatus(header.code).phrase)
+            )
+            self.log(msg)
         
         header['Content-Length'] = len(content)
+        if self.allowcros:
+            header['Access-Control-Allow-Origin'] = '*'
         connection.write(header.encode() + b'\r\n\r\n')
         connection.write(content)
 
@@ -162,7 +168,7 @@ class HTTPImageServer():
             new_h, new_w = (real_h * max_ratio, real_w * max_ratio)
             img = img.resize((int(new_w), int(new_h)))
             img_stream = io.BytesIO()
-            img = img.save(img_stream, format='webp')
+            img = img.save(img_stream, format=self.thumbnail)
             content = img_stream.getvalue()
         else:
             with open(full_path, 'rb') as f:
@@ -185,35 +191,78 @@ class HTTPImageServer():
         location, params = self.parse_url(url)
         location = location.strip('/\\')
         header, content = None, None
+        loglevel = 0
         if location == 'directory':
             header, content = self.handle_index(params)
+            loglevel = 2
         elif location == 'img':
             header, content = self.handle_image(params)
+            loglevel = 1
         elif location in ['', 'index', 'index.html']:
             header = HTTPResponseHeader(200)
             content = loadfile(index_path).encode('utf-8')
+            loglevel = 2
         else:
             header = HTTPResponseHeader(404)
             content = b'Please Do Not Try To Access Non-Image File!'
-        self.response(connection, header, content)
+            loglevel = 2
+        self.response(connection, header, content, loglevel=loglevel)
+
+def str2bool(string):
+    positive = ['true',
+        't',
+        'y',
+        'yes',
+        '1',
+        'correct',
+        'accept',
+        'positive'
+    ]
+    if string.lower() in positive:
+        return True
+    else:
+        return False
 
 if __name__ == '__main__':
     import sys
+    import argparse
+    import json
     args= sys.argv[1:]
 
-    port = 80
-    root = '.'
-    if len(args) > 0:
-        try:
-            port = int(args[0])
-        except Exception:
-            print('Port {0} not understood, use 80 instead'.format(args[0]), file=sys.stderr)
-    if len(args) > 1:
-        root = args[1]
-        if not os.path.isdir(root):
-            print('Path {0} is not a valid path, use current directory instead.'.format(root), file=sys.stderr)
-            root = '.'
+    parser = argparse.ArgumentParser('HTTPImageServer')
+    conf_path = 'config.json'
 
-    print('Start HTTP server on port {0} and use web root as {1}'.format(port, root))
-    server = HTTPImageServer(bind_addr='0.0.0.0:{0}'.format(port), imgroot=root)
+    # load default configuration first.
+    defaults = {
+        "port": 80,
+        "interface": "0.0.0.0",
+        "root": ".",
+        "thumbnail": "webp",
+        "cros": True,
+        "loglevel": 2,
+    }
+    config = defaults
+    if os.path.isfile(conf_path):
+        with open(conf_path, 'r', encoding='utf-8') as f:
+            config.update(json.load(f))
+    else:
+        with open(conf_path, 'w+', encoding='utf-8') as f:
+            json.dump(config, f, indent=4, ensure_ascii=False)
+        
+
+    parser.add_argument('--port', '-p', type=int, default=None, help='which port to start server on.')
+    parser.add_argument('--interface', '-i', type=str, default=None, help='which interface to bind, default is 0.0.0.0 for all interface.')
+    parser.add_argument('--root', '-r', type=str, default=None, help='root directory, default is current directory.')
+    parser.add_argument('--thumbnail', '-t', type=str, default=None, help='thumbnail format, default is webp, if you have any trouble, change to jpeg.')
+    parser.add_argument('--cros', type=str2bool, default=None, help='disable cros. default is enabled.')
+    parser.add_argument('--loglevel', '-l', type=int, default=None, help='loglevel, 0: all information 1: only for response. 2: do not log image file. 3: no log.')
+    parser.add_argument('--save', default=False, action='store_true', help='save the configuration as default.')
+    args = parser.parse_args()
+    parsed = {key:value for key, value in args.__dict__.items() if value is not None}
+    config.update(parsed)
+    args.__dict__.update(config)
+
+    addr = '{0}:{1}'.format(args.interface, args.port)
+    print('Start HTTP server on {0} and use web root as {1}'.format(addr, args.root))
+    server = HTTPImageServer(bind_addr=addr, imgroot=args.root, thumbnail=args.thumbnail, allowcros=args.cros, loglevel=args.loglevel)
     server.start(back=False)
