@@ -261,6 +261,9 @@ if __name__ == '__main__':
     parsed = {key:value for key, value in args.__dict__.items() if value is not None}
     config.update(parsed)
     args.__dict__.update(config)
+    if args.save:
+        with open(conf_path, 'w+', encoding='utf-8') as f:
+            json.dump(args.__dict__, f, indent=4, ensure_ascii=False)
 
     addr = '{0}:{1}'.format(args.interface, args.port)
     print('Start HTTP server on {0} and use web root as {1}'.format(addr, args.root))
