@@ -9,9 +9,10 @@ A naive http-based tool to show the image in a given directory.
 ## 2. How to use
 A simple command would do the job:
 ```shell
-python server.py <port> <webroot>
+python server.py -p <port> -r <webroot>
 ```
 where ```port``` is a int number of which port to use (default: 80), and ```webroot``` is the directory that containing the images(default: current directory).
+for more details, run  ```python server.py -h``` to see all the avaliable arguments.
 
 ## 3. Mostly asked questions
 
@@ -19,7 +20,7 @@ Q1. ```KeyError: webp```
 
 Ans. We use webp format to encode the image and your system have no libwebp installed. 
 
-1. you can change the format to others by modifying the code ```img = img.save(img_stream, format='webp')``` in server.py/HTTPImageServer.handle_image(line 165)
+1. you can change the format to others by add argument --thumbnail jpeg.
 
 2. you can install ```libwebp-dev``` and reinstall pillow package for webp support.
 
