@@ -14,12 +14,12 @@ from network import HTTPBaseServer, HTTPResponseHeader
 app_dir = os.path.split(os.path.realpath(__file__))[0]
 index_path = os.path.join(app_dir, 'index.html')
 
-def loadfile(path):
-    with open(path, 'r', encoding='utf-8') as f:
+def loadfile(path, mode='r', encoding='utf-8'):
+    with open(path, mode, encoding=encoding) as f:
         return f.read()
 
 class HTTPImageServer():
-    def __init__(self, bind_addr, imgroot='.', thumbnail='webp', allowcros=True, loglevel=2):
+    def __init__(self, bind_addr, imgroot='.', thumbnail='webp', allowcros=True, loglevel=2, favicon=None):
         self.server = HTTPBaseServer(request_handler=self.handle, bind_addr=bind_addr)
         self.imgroot = imgroot
         self.img_extension = ['png', 'jpg', 'jpeg', 'tiff', 'webp', 'bmp']
@@ -28,6 +28,10 @@ class HTTPImageServer():
         self.thumbnail = thumbnail
         self.allowcros = allowcros
         self.loglevel = loglevel # 0: all information 1: only for response. 2: do not log image file. 3: no log.
+        self.icon = None
+        if favicon is not None:
+            with open(favicon, 'rb') as f:
+                self.icon = f.read()
     def start(self, back=True):
         t = threading.Thread(target=self.logger, name='Logger thread', daemon=True)
         t.start()
@@ -202,6 +206,15 @@ class HTTPImageServer():
             header = HTTPResponseHeader(200)
             content = loadfile(index_path).encode('utf-8')
             loglevel = 2
+        elif location == 'favicon.ico':
+            if self.icon is not None:
+                header = HTTPResponseHeader(200)
+                header['Content-Type'] = 'image/x-icon'
+                content = self.icon
+            else:
+                header = HTTPResponseHeader(404)
+                content = b''
+            loglevel = 2
         else:
             header = HTTPResponseHeader(404)
             content = b'Please Do Not Try To Access Non-Image File!'
@@ -268,5 +281,5 @@ if __name__ == '__main__':
 
     addr = '{0}:{1}'.format(args.interface, args.port)
     print('Start HTTP server on {0} and use web root as {1}'.format(addr, args.root))
-    server = HTTPImageServer(bind_addr=addr, imgroot=args.root, thumbnail=args.thumbnail, allowcros=args.cros, loglevel=args.loglevel)
+    server = HTTPImageServer(bind_addr=addr, imgroot=args.root, thumbnail=args.thumbnail, allowcros=args.cros, loglevel=args.loglevel, favicon='./favicon.ico')
     server.start(back=False)
