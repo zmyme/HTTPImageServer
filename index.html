@@ -37,21 +37,24 @@
         justify-content: center;
     }
     .imgcontainer {
-        display: flex;
-        flex-direction: column;
+        width: -webkit-min-content;
+        width: -moz-min-content;
+        width: min-content;
         margin: 0.3rem;
         padding: 0.3rem;
         background-color: #ffffff;
         border-radius: 0.3rem;
-        justify-content: center;
     }
     .imgcontainer > a {
         display: flex;
         justify-content: center;
     }
     .imgcontainer > p {
+        min-width: 10.0rem;
         text-align: center;
         margin: 0.2rem;
+        word-wrap:break-word;
+        word-break:break-all;
     }
     .more {
         display: flex;
